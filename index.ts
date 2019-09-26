@@ -2,6 +2,22 @@ import Papa from 'papaparse';
 import fs from 'fs';
 import path from 'path';
 import { Connections, Person } from './endorsementTypes';
+import nodemailer from 'nodemailer';
+
+const IUGA_EMAIL = process.env.IUGA_EMAIL;
+const IUGA_PASSWORD = process.env.IUGA_PASSWORD;
+
+// set up email
+let transporter = nodemailer.createTransport({
+	host: 'smtp.gmail.com',
+	port: 587,
+	secure: false,
+	requireTLS: true,
+	auth: {
+		user: IUGA_EMAIL,
+		pass: IUGA_PASSWORD
+	}
+});
 
 // Grab the people.csv file from the data folder. (Current working directory has to be ~ of the repo)
 const dataString = fs.readFileSync(path.resolve(process.cwd() + '/data/people.csv'), 'UTF8');
@@ -33,6 +49,26 @@ const potentiallyConnect = (
 		return true;
 	}
 	return false;
+}
+
+const generateEmail = (
+	otherIds: number[],
+	id: number,
+	people: Person[]
+): string => {
+	return `<p>Hi ${people[id].name},</p>
+
+<p>Thank you for participating in LinkedIn endorsement week! Here are the people you should add on LinkedIn. Others not on this list will add you.</p>
+
+	${otherIds.map(otherId => {
+		let person = people[otherId];
+		return `<p><a href="${person.linkedin}">${person.name}</a></p>`;
+	}).join()}
+
+<p>Best,</p>
+<p>Informatics Undergraduate Association</p>
+<p><a href="https://iuga.info">www.iuga.info</a></p>
+`
 }
 
 const main = async () => {
@@ -81,7 +117,24 @@ const main = async () => {
 		}
 	}
 
-	console.log(connections);
+	Object.keys(connections).forEach(id => {
+		let idNum = Number(id);
+		let html = generateEmail(connections[idNum], idNum, people);
+		let mailOptions = {
+			from: IUGA_EMAIL,
+			to: people[idNum].email,
+			subject: "TEST EMAIL FOR LIN ENDORSEMENT WEEK",
+			html
+		};
+
+		transporter.sendMail(mailOptions, (error, info) => {
+			if (error) {
+				console.log(error);
+			} else {
+				console.log('Email sent to ' + people[idNum].email + ' response: ' + info.response);
+			}
+		});
+	})
 };
 
 main();
