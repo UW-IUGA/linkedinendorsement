@@ -1,0 +1,21 @@
+{
+	"name": "linkedinendorsement",
+	"version": "1.0.0",
+	"description": "Linkedin Endorsement week script for IUGA",
+	"main": "lib/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "tsc",
+		"start": "npm run build && node lib/index.js"
+	},
+	"author": "IUGA",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/node": "^12.7.8",
+		"@types/papaparse": "^5.0.1",
+		"typescript": "^3.6.3"
+	},
+	"dependencies": {
+		"papaparse": "^5.1.0"
+	}
+}
