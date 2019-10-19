@@ -22,7 +22,7 @@ if __name__ == "__main__":
     for email in emails:
         print("SENDING EMAIL TO {}".format(email['email']))
         message = MIMEMultipart('alternative')
-        message['to'] = email['email']
+        message['to'] = "wkwok16@uw.edu"  # email['email']
         message['from'] = "Informatics Undergraduate Association <{}>".format(
             IUGA_EMAIL)
         message['subject'] = EMAIL_TITLE
