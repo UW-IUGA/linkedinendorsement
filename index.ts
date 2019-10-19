@@ -6,10 +6,11 @@ import nodemailer from 'nodemailer';
 
 const IUGA_EMAIL = process.env.IUGA_EMAIL;
 const IUGA_PASSWORD = process.env.IUGA_PASSWORD;
+const template = fs.readFileSync('./template.html', { encoding: 'UTF8' });
 
 // set up email
 let transporter = nodemailer.createTransport({
-	host: 'smtp.gmail.com',
+	host: 'smtp.uw.com',
 	port: 587,
 	secure: false,
 	requireTLS: true,
@@ -54,21 +55,15 @@ const potentiallyConnect = (
 const generateEmail = (
 	otherIds: number[],
 	id: number,
-	people: Person[]
+	people: Person[],
+	updatedtemplate: string
 ): string => {
-	return `<p>Hi ${people[id].name},</p>
-
-<p>Thank you for participating in LinkedIn endorsement week! Here are the people you should add on LinkedIn. Others not on this list will add you.</p>
-
-	${otherIds.map(otherId => {
+	return updatedtemplate.replace("{{name}}", people[id].name).replace("{{whoToAdd}}", `
+			<ul>${otherIds.map(otherId => {
 		let person = people[otherId];
-		return `<p><a href="${person.linkedin}">${person.name}</a></p>`;
-	}).join()}
-
-<p>Best,</p>
-<p>Informatics Undergraduate Association</p>
-<p><a href="https://iuga.info">www.iuga.info</a></p>
-`
+		return `<li><a href="${person.linkedin}">${person.name}</a></li>`;
+	}).join("")}</ul>`
+	);
 }
 
 const main = async () => {
@@ -117,24 +112,46 @@ const main = async () => {
 		}
 	}
 
+	const participationList = `<ul>${people.map(person => `<li>${person.name}</li>`).join("")}</ul>`
+	const updatedTemplate = template.replace("{{participationList}}", participationList);
+
+	// COMMENT OUT FOR NON_TESTNG
+	try {
+		fs.mkdirSync('testemails');
+	} catch (e) {
+		console.log('testemails exists');
+	}
+	///////////////////////////////////
+
+	let emails: any = [];
 	Object.keys(connections).forEach(id => {
 		let idNum = Number(id);
-		let html = generateEmail(connections[idNum], idNum, people);
-		let mailOptions = {
-			from: IUGA_EMAIL,
-			to: people[idNum].email,
-			subject: "TEST EMAIL FOR LIN ENDORSEMENT WEEK",
-			html
-		};
-
-		transporter.sendMail(mailOptions, (error, info) => {
-			if (error) {
-				console.log(error);
-			} else {
-				console.log('Email sent to ' + people[idNum].email + ' response: ' + info.response);
-			}
+		let html = generateEmail(connections[idNum], idNum, people, updatedTemplate);
+		fs.writeFileSync(`./testemails/${idNum}.html`, html, { encoding: 'UTF8' });
+		emails.push({
+			email: people[idNum].email,
+			idNum
 		});
-	})
+
+
+		// // COMMENT IN FOR TESTING
+		// let mailOptions = {
+		// 	from: IUGA_EMAIL,
+		// 	to: people[idNum].email,
+		// 	subject: "TEST EMAIL FOR LIN ENDORSEMENT WEEK",
+		// 	html
+		// };
+
+		// transporter.sendMail(mailOptions, (error, info) => {
+		// 	if (error) {
+		// 		console.log(error);
+		// 	} else {
+		// 		console.log('Email sent to ' + people[idNum].email + ' response: ' + info.response);
+		// 	}
+		// });
+	});
+
+	fs.writeFileSync('./emails.json', JSON.stringify(emails))
 };
 
 main();
