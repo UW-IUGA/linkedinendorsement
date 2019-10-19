@@ -23,12 +23,14 @@ if __name__ == "__main__":
         print("SENDING EMAIL TO {}".format(email['email']))
         message = MIMEMultipart('alternative')
         message['to'] = email['email']
-        message['from'] = IUGA_EMAIL
-        message['subject'] = 'TEST LINKEDIN POST'
+        message['from'] = "Informatics Undergraduate Association <{}>".format(
+            IUGA_EMAIL)
+        message['subject'] = EMAIL_TITLE
         htmlToAdd = open("./testemails/{}.html".format(email["idNum"])).read()
         message.attach(MIMEText(htmlToAdd, "html"))
         try:
-            server.sendmail(IUGA_EMAIL, email['email'], message.as_string())
+            server.sendmail("Informatics Undergraduate Association",
+                            email['email'], message.as_string())
             print("SUCCESS SENDING EMAIL TO {}".format(email['email']))
         except:
             print("FAILURE SENDING EMAIL TO {}".format(email['email']))
