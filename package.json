@@ -18,6 +18,6 @@
 	},
 	"dependencies": {
 		"nodemailer": "^6.3.0",
-		"papaparse": "^5.1.0"
+		"papaparse": "^5.2.0"
 	}
 }
