@@ -10,7 +10,7 @@ const template = fs.readFileSync('./template.html', { encoding: 'UTF8' });
 
 // set up email
 let transporter = nodemailer.createTransport({
-	host: 'smtp.uw.com',
+	host: 'smtp.uw.edu',
 	port: 587,
 	secure: false,
 	requireTLS: true,
@@ -21,7 +21,7 @@ let transporter = nodemailer.createTransport({
 });
 
 // Grab the people.csv file from the data folder. (Current working directory has to be ~ of the repo)
-const dataString = fs.readFileSync(path.resolve(process.cwd() + '/data/people.csv'), 'UTF8');
+const dataString = fs.readFileSync(path.resolve(process.cwd() + '/data/people3.csv'), 'UTF8');
 
 /**
  * potentiallyConnect will read the two IDs and determine if they should be connected, or if
@@ -58,11 +58,10 @@ const generateEmail = (
 	people: Person[],
 	updatedtemplate: string
 ): string => {
-	return updatedtemplate.replace("{{name}}", people[id].name).replace("{{whoToAdd}}", `
-			<ul>${otherIds.map(otherId => {
+	return updatedtemplate.replace("{{name}}", people[id].name).replace("{{whoToAdd}}", `${otherIds.map(otherId => {
 		let person = people[otherId];
-		return `<li><a href="${person.linkedin}">${person.name}</a></li>`;
-	}).join("")}</ul>`
+		return `${person.linkedin}, ${person.name}`;
+	}).join("")}`
 	);
 }
 
@@ -112,7 +111,30 @@ const main = async () => {
 		}
 	}
 
-	const participationList = `<ul>${people.map(person => `<li>${person.name}</li>`).join("")}</ul>`
+	console.log('people')
+	console.log(people)
+	console.log('connections')
+	console.log(connections)
+
+	let output = '';
+
+	Object.keys(connections).forEach(recipientKey => {
+		const recipientId = Number(recipientKey);
+		let csvRow = `${people[recipientId].name},${people[recipientId].email}`;
+
+		connections[recipientId].forEach(targetKey => {
+			const targetId = Number(targetKey);
+			// csvRow += `,${people[targetId].name},${people[targetId].email}`;
+			csvRow += `,<a href="${people[targetId].linkedin}">${people[targetId].name}</a>`;
+		});
+
+		output += '\n' + csvRow;
+	});
+
+	fs.writeFileSync('./output.csv', output)
+
+	/*
+	const participationList = `${people.map(person => `${person.name}`).join("")}`
 	const updatedTemplate = template.replace("{{participationList}}", participationList);
 
 	// COMMENT OUT FOR NON_TESTNG
@@ -152,6 +174,7 @@ const main = async () => {
 	});
 
 	fs.writeFileSync('./emails.json', JSON.stringify(emails))
+	*/
 };
 
 main();
